@@ -1,0 +1,16 @@
+FROM ubuntu:24.04
+
+
+RUN apt update && apt install -y curl golang-go
+
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+
+COPY start-container /usr/local/bin/start-container
+RUN chmod +x /usr/local/bin/start-container
+
+EXPOSE 8000
+
+ENTRYPOINT [ "start-container" ]
