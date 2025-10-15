@@ -3,6 +3,7 @@ package controllers
 import (
 	"goravel/app/models"
 
+	"github.com/goravel/framework/contracts/auth"
 	"github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/facades"
 	"github.com/goravel/framework/support/debug"
@@ -42,7 +43,7 @@ func (r *AuthController) Register(ctx http.Context) http.Response {
 
 }
 
-func (r *AuthController) Index(ctx http.Context) http.Response {
+func (r *AuthController) Login(ctx http.Context) http.Response {
 	var user models.User
 	ctx.Request().Bind(&user)
 
@@ -63,8 +64,8 @@ func (r *AuthController) Index(ctx http.Context) http.Response {
 	}
 
 	token, err := facades.Auth(ctx).Login(&user)
-	dd(token)
 	if err != nil {
+		facades.Log().Error(err)
 		return ctx.Response().Json(http.StatusInternalServerError, map[string]any{
 			"status":  1,
 			"message": "Authentication failed",
@@ -75,6 +76,24 @@ func (r *AuthController) Index(ctx http.Context) http.Response {
 		"status":  0,
 		"message": "Login successful",
 		"token":   token,
+		"user":    user,
+	})
+}
+
+func (r *AuthController) Profile(ctx http.Context) http.Response {
+	payloadUser := ctx.Value("user").(*auth.Payload)
+
+	var user models.User
+	err := facades.Orm().Query().Find(&user, payloadUser.Key)
+	if err != nil {
+		return ctx.Response().Json(http.StatusBadRequest, map[string]any{
+			"status":  1,
+			"message": "User is not found",
+		})
+	}
+	return ctx.Response().Json(http.StatusOK, map[string]any{
+		"status":  0,
+		"message": "success",
 		"user":    user,
 	})
 }
